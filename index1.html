@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mi Portafolio — Precios Justos</title>
+<style>
+  :root {
+    --bg: #f7f7f5;
+    --surface: #ffffff;
+    --surface-2: #f1efe8;
+    --text: #1a1a1a;
+    --text-2: #666;
+    --text-3: #999;
+    --border: rgba(0,0,0,0.1);
+    --border-2: rgba(0,0,0,0.2);
+    --green: #0f6e56;
+    --green-bg: #e1f5ee;
+    --red: #a32d2d;
+    --red-bg: #fcebeb;
+    --amber: #d85a30;
+    --amber-bg: #ffe8d9;
+    --sell-zone: #32ff32;
+    --blue: #185fa5;
+    --blue-bg: #e6f1fb;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1a1a1a;
+      --surface: #262625;
+      --surface-2: #2c2c2a;
+      --text: #f5f5f5;
+      --text-2: #aaa;
+      --text-3: #777;
+      --border: rgba(255,255,255,0.12);
+      --border-2: rgba(255,255,255,0.22);
+      --green: #5DCAA5;
+      --green-bg: #0F6E56;
+      --red: #F09595;
+      --red-bg: #791F1F;
+      --amber: #ff9a4d;
+      --amber-bg: #5c2e0e;
+      --sell-zone: #4dff4d;
+      --blue: #85B7EB;
+      --blue-bg: #0C447C;
+    }
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: var(--bg); color: var(--text); padding: 16px; max-width: 900px; margin: 0 auto; line-height: 1.5; }
+  header { padding: 8px 0 16px; }
+  header h1 { font-size: 22px; font-weight: 600; }
+  header p { font-size: 13px; color: var(--text-2); margin-top: 4px; }
+  .tabs { display: flex; gap: 4px; margin: 16px 0 12px; border-bottom: 0.5px solid var(--border); }
+  .tab { padding: 10px 16px; font-size: 14px; font-weight: 500; color: var(--text-2); background: transparent; border: none; border-bottom: 2px solid transparent; cursor: pointer; }
+  .tab.active { color: var(--text); border-bottom-color: var(--text); }
+  .summary { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 16px; }
+  .metric { background: var(--surface-2); border-radius: 10px; padding: 12px 14px; }
+  .metric-label { font-size: 11px; color: var(--text-2); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.3px; }
+  .metric-value { font-size: 18px; font-weight: 600; }
+  .metric-value.green { color: var(--green); }
+  .metric-value.red { color: var(--red); }
+  .metric-sub { font-size: 11px; color: var(--text-3); margin-top: 2px; }
+  .status { display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: var(--text-3); margin-bottom: 12px; }
+  .fees-summary { background: var(--surface-2); border-radius: 8px; padding: 10px 14px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: var(--text-2); flex-wrap: wrap; gap: 8px; }
+  .fees-summary strong { color: var(--text); font-weight: 600; }
+  .fees-detail { font-size: 11px; color: var(--text-3); }
+  .fees-line { font-size: 11px; color: var(--text-3); margin-top: 6px; padding: 4px 0; }
+  .fees-line .fees-value { font-weight: 500; color: var(--text-2); }
+  .btn-refresh { font-size: 12px; color: var(--blue); background: none; border: none; cursor: pointer; padding: 4px 8px; border-radius: 6px; }
+  .btn-refresh:hover { background: var(--blue-bg); }
+  .pos { background: var(--surface); border: 0.5px solid var(--border); border-radius: 14px; padding: 14px 16px; margin-bottom: 10px; }
+  .pos-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+  .pos-ticker { font-size: 17px; font-weight: 600; display: flex; align-items: center; gap: 6px; }
+  .pos-color-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; }
+  .pos-weight { font-size: 11px; font-weight: 500; color: var(--text-2); background: var(--surface-2); padding: 2px 8px; border-radius: 10px; margin-left: 4px; }
+  .divers-bar-wrap { background: var(--surface); border: 0.5px solid var(--border); border-radius: 12px; padding: 12px 14px; margin-bottom: 12px; }
+  .divers-label { font-size: 11px; color: var(--text-2); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.3px; }
+  .divers-bar { display: flex; height: 10px; border-radius: 5px; overflow: hidden; margin-bottom: 10px; }
+  .divers-segment { height: 100%; transition: opacity 0.2s; }
+  .divers-segment:hover { opacity: 0.7; }
+  .divers-legend { display: flex; flex-wrap: wrap; gap: 6px 10px; }
+  .divers-legend-item { font-size: 11px; color: var(--text-2); display: flex; align-items: center; gap: 4px; }
+  .divers-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; }
+  .pos-name { font-size: 11px; color: var(--text-2); margin-top: 2px; }
+  .pos-actual { font-size: 17px; font-weight: 600; text-align: right; }
+  .pos-change { font-size: 12px; font-weight: 500; text-align: right; margin-top: 2px; }
+  .green { color: var(--green); }
+  .red { color: var(--red); }
+  .cells { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin: 10px 0; }
+  .cell { background: var(--surface-2); padding: 8px 10px; border-radius: 8px; }
+  .cell-label { font-size: 10px; color: var(--text-2); text-transform: uppercase; letter-spacing: 0.3px; }
+  .cell-value { font-size: 13px; font-weight: 600; margin-top: 3px; }
+  .editable { cursor: pointer; position: relative; }
+  .editable::after { content: '✎'; position: absolute; top: 6px; right: 8px; font-size: 10px; color: var(--text-3); opacity: 0.6; }
+  .editable:hover::after { opacity: 1; color: var(--blue); }
+  .edit-input { font-size: 13px; font-weight: 600; width: 100%; padding: 2px 4px; border: 1px solid var(--blue); border-radius: 4px; background: var(--surface); color: var(--text); font-family: inherit; }
+  .bar { margin-top: 12px; }
+  .bar-labels { display: flex; justify-content: space-between; font-size: 10px; color: var(--text-3); margin-bottom: 4px; }
+  .bar-track { height: 6px; background: var(--surface-2); border-radius: 3px; position: relative; overflow: visible; }
+  .bar-buy-zone { position: absolute; left: 0; height: 100%; background: var(--green-bg); border-radius: 3px 0 0 3px; opacity: 0.8; }
+  .bar-sell-zone { position: absolute; right: 0; height: 100%; background: var(--sell-zone); border-radius: 0 3px 3px 0; opacity: 1; box-shadow: 0 0 8px var(--sell-zone), 0 0 4px var(--sell-zone); }
+  .bar-pointer { position: absolute; width: 3px; height: 14px; background: var(--text); top: -4px; border-radius: 2px; transform: translateX(-50%); box-shadow: 0 0 0 2px var(--surface); }
+  .action-row { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; padding-top: 10px; border-top: 0.5px solid var(--border); }
+  .badge { display: inline-block; padding: 4px 10px; border-radius: 5px; font-size: 11px; font-weight: 500; }
+  .badge-buy { background: var(--green-bg); color: var(--green); }
+  .badge-hold { background: #ff8c00; color: #ffffff; }
+  .badge-caution { background: var(--red-bg); color: var(--red); }
+  .badge-etf { background: var(--blue-bg); color: var(--blue); }
+  .recommendation { font-size: 11px; color: var(--text-2); text-align: right; }
+  .wl-item { background: var(--surface); border: 0.5px solid var(--border); border-radius: 10px; padding: 12px 14px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
+  .wl-ticker { font-size: 15px; font-weight: 600; }
+  .wl-name { font-size: 11px; color: var(--text-2); margin-top: 2px; }
+  .wl-price { font-size: 15px; font-weight: 600; text-align: right; }
+  .wl-target { font-size: 11px; color: var(--text-2); margin-top: 2px; text-align: right; }
+  .wl-delete { background: none; border: none; color: var(--text-3); font-size: 16px; cursor: pointer; padding: 0 8px; margin-left: 8px; }
+  .wl-delete:hover { color: var(--red); }
+  .add-box { border: 1px dashed var(--border-2); border-radius: 10px; padding: 14px; margin-top: 16px; background: var(--surface-2); }
+  .add-label { font-size: 12px; color: var(--text-2); margin-bottom: 10px; }
+  .add-row { display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 6px; }
+  .add-row input { height: 36px; font-size: 13px; padding: 0 10px; border: 0.5px solid var(--border-2); border-radius: 6px; background: var(--surface); color: var(--text); font-family: inherit; }
+  .add-row input:focus { outline: none; border-color: var(--blue); }
+  .add-row button { height: 36px; padding: 0 14px; font-size: 13px; font-weight: 500; background: var(--text); color: var(--bg); border: none; border-radius: 6px; cursor: pointer; }
+  .footer { font-size: 10px; color: var(--text-3); margin-top: 20px; padding-top: 12px; border-top: 0.5px solid var(--border); line-height: 1.6; }
+  .btn-add-tx { background: var(--blue-bg); color: var(--blue); border: none; padding: 5px 10px; border-radius: 6px; font-size: 11px; font-weight: 500; cursor: pointer; margin-left: 8px; font-family: inherit; }
+  .btn-add-tx:hover { opacity: 0.85; }
+  .btn-sell-tx { background: var(--surface-2); color: var(--text-2); border: none; padding: 5px 10px; border-radius: 6px; font-size: 11px; font-weight: 500; cursor: pointer; margin-left: 4px; font-family: inherit; }
+  .btn-sell-tx:hover { background: var(--red-bg); color: var(--red); }
+  .pos-actions-row { display: flex; gap: 6px; margin-top: 10px; padding-top: 10px; border-top: 0.5px solid var(--border); }
+  .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 100; padding: 16px; }
+  .modal { background: var(--surface); border-radius: 14px; padding: 20px; max-width: 400px; width: 100%; box-shadow: 0 10px 40px rgba(0,0,0,0.3); }
+  .modal h3 { font-size: 17px; font-weight: 600; margin-bottom: 4px; }
+  .modal p.sub { font-size: 12px; color: var(--text-2); margin-bottom: 16px; }
+  .modal-field { margin-bottom: 12px; }
+  .modal-field label { display: block; font-size: 12px; color: var(--text-2); margin-bottom: 4px; font-weight: 500; }
+  .modal-field input { width: 100%; height: 40px; font-size: 15px; padding: 0 12px; border: 1px solid var(--border-2); border-radius: 8px; background: var(--surface); color: var(--text); font-family: inherit; }
+  .modal-field input:focus { outline: none; border-color: var(--blue); }
+  .modal-preview { background: var(--surface-2); border-radius: 8px; padding: 10px 12px; margin: 12px 0; font-size: 12px; color: var(--text-2); }
+  .modal-preview div { display: flex; justify-content: space-between; padding: 3px 0; }
+  .modal-preview strong { color: var(--text); font-weight: 600; }
+  .modal-preview .highlight { color: var(--blue); font-weight: 600; }
+  .modal-btns { display: flex; gap: 8px; margin-top: 16px; }
+  .modal-btns button { flex: 1; height: 40px; font-size: 14px; font-weight: 500; border-radius: 8px; border: none; cursor: pointer; font-family: inherit; }
+  .btn-save { background: var(--blue); color: white; }
+  .btn-save:hover { opacity: 0.9; }
+  .btn-cancel { background: var(--surface-2); color: var(--text); }
+  .btn-cancel:hover { background: var(--border); }
+  .hidden { display: none; }
+  .export-bar { display: flex; gap: 8px; margin: 16px 0 8px; }
+  .export-btn { flex: 1; padding: 10px; font-size: 12px; background: var(--surface); border: 0.5px solid var(--border); border-radius: 8px; color: var(--text); cursor: pointer; font-family: inherit; }
+  .export-btn:hover { background: var(--surface-2); }
+  .section-title { font-size: 13px; font-weight: 500; color: var(--text-2); margin: 16px 0 8px; text-transform: uppercase; letter-spacing: 0.3px; }
+  @media (max-width: 600px) {
+    body { padding: 12px; }
+    .summary { grid-template-columns: repeat(2, 1fr); }
+    .cells { grid-template-columns: repeat(3, 1fr); gap: 5px; }
+    .cell { padding: 7px 8px; }
+    .cell-value { font-size: 12px; }
+    .add-row { grid-template-columns: 1fr 1fr; }
+    .add-row button { grid-column: span 2; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Mi portafolio</h1>
+  <p>Buy &amp; Hold · USD · Precios justos de analistas</p>
+</header>
+
+<div class="tabs">
+  <button class="tab active" data-view="portfolio">Mis posiciones</button>
+  <button class="tab" data-view="watchlist">Watchlist</button>
+</div>
+
+<div id="view-portfolio">
+  <div class="status">
+    <span id="last-update"></span>
+    <button class="btn-refresh" id="btn-refresh">↻ Actualizar precios</button>
+  </div>
+
+  <div class="summary">
+    <div class="metric">
+      <div class="metric-label">Costo total</div>
+      <div class="metric-value" id="m-invested">—</div>
+      <div class="metric-sub">capital + comisiones</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">Valor actual</div>
+      <div class="metric-value" id="m-current">—</div>
+      <div class="metric-sub">mercado hoy</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">G/P total</div>
+      <div class="metric-value" id="m-pl">—</div>
+      <div class="metric-sub" id="m-pl-pct">—</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">Potencial</div>
+      <div class="metric-value green" id="m-upside">—</div>
+      <div class="metric-sub">a consenso</div>
+    </div>
+  </div>
+
+  <div class="fees-summary">
+    <span>💸 Comisiones pagadas en total: <strong id="m-fees-total">—</strong></span>
+    <span class="fees-detail">Capital puro invertido: <strong id="m-capital-only">—</strong></span>
+  </div>
+
+  <div id="positions"></div>
+
+  <div style="text-align: center; margin: 16px 0;">
+    <button class="btn-add-tx" id="btn-new-position" style="padding: 10px 20px; font-size: 13px;">➕ Agregar nueva acción al portafolio</button>
+  </div>
+
+  <div class="export-bar">
+    <button class="export-btn" id="btn-export">💾 Guardar datos (JSON)</button>
+    <button class="export-btn" id="btn-import">📂 Cargar datos</button>
+    <input type="file" id="file-import" accept=".json" style="display:none">
+  </div>
+</div>
+
+<div id="view-watchlist" class="hidden">
+  <p class="section-title">Acciones que sigo para comprar</p>
+  <div id="watchlist"></div>
+
+  <div class="add-box">
+    <div class="add-label">Agregar nueva acción al watchlist</div>
+    <div class="add-row" style="grid-template-columns: repeat(5, 1fr); gap: 6px;">
+      <input type="text" id="new-ticker" placeholder="Ticker" style="text-transform: uppercase;" maxlength="8">
+      <input type="number" id="new-price" placeholder="Actual" step="0.01">
+      <input type="number" id="new-buy" placeholder="Compra" step="0.01">
+      <input type="number" id="new-sell" placeholder="Venta" step="0.01">
+      <button id="btn-add">+ Agregar</button>
+    </div>
+  </div>
+</div>
+
+<p class="footer">Los precios actuales reflejan la última actualización manual (puede tocar ✎ para editarlos). Los precios objetivo de compra y venta son consenso de analistas de Wall Street. Este dashboard es una herramienta personal y no constituye asesoramiento financiero profesional. Para precios en vivo, actualice periódicamente desde su broker.</p>
+
+<div id="modal-container"></div>
+
+<script>
+const STORAGE_KEY = 'mi_portafolio_v6';
+
+const defaultPortfolio = [
+  { ticker: 'ADBE', name: 'Adobe Inc.',         qty: 4.0000, avgCost: 250.38, fees: 3.00, current: 254.04, buyTarget: 270,  sellTarget: 605,  consensus: 417,  rating: 'hold' },
+  { ticker: 'HIMS', name: 'Hims & Hers Health', qty: 10.0000,avgCost: 15.60,  fees: 1.00, current: 27.11,  buyTarget: 17,   sellTarget: 68,   consensus: 40,   rating: 'hold' },
+  { ticker: 'MSFT', name: 'Microsoft Corp.',     qty: 0.8000, avgCost: 400.04, fees: 1.00, current: 426.49, buyTarget: 392,  sellTarget: 678,  consensus: 597,  rating: 'buy' },
+  { ticker: 'ADSK', name: 'Autodesk Inc.',       qty: 1.0000, avgCost: 264.34, fees: 1.00, current: 246.63, buyTarget: 246,  sellTarget: 430,  consensus: 359,  rating: 'buy' },
+  { ticker: 'CSPX', name: 'iShares S&P 500 ETF', qty: 6.0000, avgCost: 718.22, fees: 5.00, current: 759.20, buyTarget: null, sellTarget: null, consensus: null, rating: 'etf' },
+  { ticker: 'MELI', name: 'MercadoLibre Inc.',   qty: 2.0000, avgCost: 1669.70,fees: 3.00, current: 1831.00,buyTarget: 2100, sellTarget: 3500, consensus: 2733, rating: 'buy' },
+  { ticker: 'FICO', name: 'Fair Isaac Corp.',    qty: 1.4000, avgCost: 1091.54,fees: 2.00, current: 1069.93,buyTarget: 1032, sellTarget: 2400, consensus: 1887, rating: 'caution' },
+];
+
+const defaultWatchlist = [
+  { ticker: 'CVX',  name: 'Chevron Corp.',            current: 189.77, buyTarget: 165, sellTarget: 242, consensus: 209, rating: 'buy',     note: 'Energía · Consenso fuerte compra · Dividendo sólido' },
+  { ticker: 'DOCU', name: 'DocuSign Inc.',            current: 47.26,  buyTarget: 42,  sellTarget: 124, consensus: 76,  rating: 'hold',    note: 'Software · Valoración descontada · Crecimiento desacelerado' },
+  { ticker: 'NVO',  name: 'Novo Nordisk A/S',         current: 40.93,  buyTarget: 36,  sellTarget: 70,  consensus: 51,  rating: 'caution', note: 'Farma · Presión por Eli Lilly · Dividendo ~5%' },
+  { ticker: 'UNH',  name: 'UnitedHealth Group',        current: 314.19, buyTarget: 255, sellTarget: 440, consensus: 361, rating: 'buy',     note: 'Salud · En zona de acumulación · Directivos comprando' },
+];
+
+let data = loadData();
+
+function loadData() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) return JSON.parse(saved);
+  } catch(e) {}
+  return { portfolio: defaultPortfolio, watchlist: defaultWatchlist, lastUpdate: new Date().toISOString() };
+}
+
+function saveData() {
+  data.lastUpdate = new Date().toISOString();
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch(e) {}
+}
+
+const ratingLabel = { buy: 'Comprar', hold: 'Mantener', caution: 'Precaución', etf: 'ETF indexado' };
+const ratingClass = { buy: 'badge-buy', hold: 'badge-hold', caution: 'badge-caution', etf: 'badge-etf' };
+
+const fmt = (v, d=2) => v == null ? '—' : '$' + Number(v).toLocaleString('en-US', {minimumFractionDigits: d, maximumFractionDigits: d});
+const fmtPct = (v) => (v >= 0 ? '+' : '') + v.toFixed(2) + '%';
+
+function renderPortfolio() {
+  const container = document.getElementById('positions');
+  container.innerHTML = '';
+
+  // Primera pasada: calcular totales
+  let totalInvested = 0, totalCurrent = 0, totalConsensus = 0, totalFees = 0;
+  data.portfolio.forEach(p => {
+    totalInvested += p.qty * p.avgCost;
+    totalCurrent += p.qty * p.current;
+    totalConsensus += p.consensus ? p.qty * p.consensus : p.qty * p.current;
+    totalFees += (p.fees || 0);
+  });
+  const totalCostReal = totalInvested + totalFees; // Costo real incluyendo comisiones
+
+  // Barra de diversificación visual
+  const diversificationColors = ['#185fa5', '#0f6e56', '#854f0b', '#a32d2d', '#7f77dd', '#d85a30', '#d4537e'];
+  let diversBarHtml = '<div class="divers-bar-wrap"><div class="divers-label">Diversificación de mi portafolio</div><div class="divers-bar">';
+  let diversLegend = '<div class="divers-legend">';
+  data.portfolio.forEach((p, idx) => {
+    const currentVal = p.qty * p.current;
+    const pct = (currentVal / totalCurrent) * 100;
+    const color = diversificationColors[idx % diversificationColors.length];
+    diversBarHtml += `<div class="divers-segment" style="width: ${pct}%; background: ${color};" title="${p.ticker}: ${pct.toFixed(1)}%"></div>`;
+    diversLegend += `<span class="divers-legend-item"><span class="divers-dot" style="background: ${color};"></span>${p.ticker} ${pct.toFixed(1)}%</span>`;
+  });
+  diversBarHtml += '</div>' + diversLegend + '</div></div>';
+  container.innerHTML = diversBarHtml;
+
+  // Segunda pasada: renderizar cada posición con su porcentaje
+  data.portfolio.forEach((p, idx) => {
+    const invested = p.qty * p.avgCost;
+    const fees = p.fees || 0;
+    const costReal = invested + fees;
+    const currentVal = p.qty * p.current;
+    const pl = currentVal - costReal;
+    const plPct = (pl / costReal) * 100;
+    const portfolioPct = (currentVal / totalCurrent) * 100;
+
+    const changeClass = pl >= 0 ? 'green' : 'red';
+    const color = diversificationColors[idx % diversificationColors.length];
+
+    let barHtml = '';
+    if (p.buyTarget && p.sellTarget) {
+      const range = p.sellTarget - p.buyTarget;
+      const pos = Math.max(2, Math.min(98, ((p.current - p.buyTarget) / range) * 100));
+      barHtml = `
+        <div class="bar">
+          <div class="bar-labels">
+            <span>↓ ${fmt(p.buyTarget, 0)} compra</span>
+            <span>${fmt(p.sellTarget, 0)} venta ↑</span>
+          </div>
+          <div class="bar-track">
+            <div class="bar-buy-zone" style="width: 15%;"></div>
+            <div class="bar-sell-zone" style="width: 15%;"></div>
+            <div class="bar-pointer" style="left: ${pos}%;" title="Precio actual: ${fmt(p.current)}"></div>
+          </div>
+        </div>`;
+    }
+
+    let recommendation = '';
+    if (p.rating === 'etf') recommendation = 'Seguir acumulando';
+    else if (p.current < p.buyTarget) recommendation = '🟢 Zona de acumulación';
+    else if (p.current > p.sellTarget * 0.9) recommendation = '🟢 Considerar tomar ganancias';
+    else if (p.consensus && p.current < p.consensus * 0.85) recommendation = '🟢 Descuento vs consenso';
+    else recommendation = 'Mantener posición';
+
+    container.innerHTML += `
+      <div class="pos" data-idx="${idx}">
+        <div class="pos-top">
+          <div>
+            <div class="pos-ticker">
+              <span class="pos-color-dot" style="background: ${color};"></span>${p.ticker}
+              <span class="pos-weight">${portfolioPct.toFixed(1)}%</span>
+            </div>
+            <div class="pos-name">${p.name} · ${p.qty} acc.</div>
+          </div>
+          <div>
+            <div class="pos-actual editable" data-field="current" data-idx="${idx}">${fmt(p.current)}</div>
+            <div class="pos-change ${changeClass}">${pl >= 0 ? '+' : ''}${fmt(pl)} (${fmtPct(plPct)})</div>
+          </div>
+        </div>
+        <div class="cells">
+          <div class="cell">
+            <div class="cell-label">Mi compra prom.</div>
+            <div class="cell-value">${fmt(p.avgCost)}</div>
+          </div>
+          <div class="cell">
+            <div class="cell-label">Costo total</div>
+            <div class="cell-value" title="Inversión + comisiones">${fmt(costReal)}</div>
+          </div>
+          <div class="cell">
+            <div class="cell-label">Valor actual</div>
+            <div class="cell-value ${changeClass}">${fmt(currentVal)}</div>
+          </div>
+        </div>
+        <div class="fees-line">
+          💸 Comisiones pagadas: <span class="fees-value editable" data-field="fees" data-idx="${idx}">${fmt(fees)}</span>
+        </div>
+        ${barHtml}
+        <div class="action-row">
+          <span class="badge ${ratingClass[p.rating]}">${ratingLabel[p.rating]}</span>
+          <span class="recommendation">${recommendation}</span>
+        </div>
+        <div class="pos-actions-row">
+          <button class="btn-add-tx" data-action="buy" data-idx="${idx}">➕ Comprar más</button>
+          <button class="btn-sell-tx" data-action="sell" data-idx="${idx}">➖ Vender</button>
+        </div>
+      </div>`;
+  });
+
+  document.getElementById('m-invested').textContent = fmt(totalCostReal, 0);
+  document.getElementById('m-current').textContent = fmt(totalCurrent, 0);
+
+  const totalPL = totalCurrent - totalCostReal;
+  const totalPLPct = (totalPL / totalCostReal) * 100;
+  const plEl = document.getElementById('m-pl');
+  plEl.textContent = (totalPL >= 0 ? '+' : '') + fmt(totalPL, 0);
+  plEl.className = 'metric-value ' + (totalPL >= 0 ? 'green' : 'red');
+  document.getElementById('m-pl-pct').textContent = fmtPct(totalPLPct);
+
+  const upsidePct = ((totalConsensus - totalCurrent) / totalCurrent) * 100;
+  document.getElementById('m-upside').textContent = fmtPct(upsidePct);
+
+  // Actualizar línea de comisiones totales
+  const feesEl = document.getElementById('m-fees-total');
+  if (feesEl) feesEl.textContent = fmt(totalFees, 2);
+  const capitalEl = document.getElementById('m-capital-only');
+  if (capitalEl) capitalEl.textContent = fmt(totalInvested, 0);
+
+  const date = new Date(data.lastUpdate);
+  document.getElementById('last-update').textContent = 'Actualizado: ' + date.toLocaleDateString('es-ES', {day: '2-digit', month: 'short', year: 'numeric'}) + ' · ' + date.toLocaleTimeString('es-ES', {hour: '2-digit', minute: '2-digit'});
+
+  attachEditListeners();
+}
+
+function renderWatchlist() {
+  const container = document.getElementById('watchlist');
+  container.innerHTML = '';
+  if (data.watchlist.length === 0) {
+    container.innerHTML = '<p style="font-size: 13px; color: var(--text-3); text-align: center; padding: 20px; background: var(--surface-2); border-radius: 10px;">Agregue acciones que le interesen para seguirlas aquí abajo ↓</p>';
+    return;
+  }
+  data.watchlist.forEach((w, idx) => {
+    const upside = w.consensus ? ((w.consensus - w.current) / w.current * 100) : 0;
+    const upsideClass = upside >= 0 ? 'green' : 'red';
+
+    let barHtml = '';
+    let zoneLabel = '';
+    if (w.buyTarget && w.sellTarget) {
+      const range = w.sellTarget - w.buyTarget;
+      const pos = Math.max(2, Math.min(98, ((w.current - w.buyTarget) / range) * 100));
+      barHtml = `
+        <div class="bar" style="margin-top: 10px;">
+          <div class="bar-labels">
+            <span>↓ ${fmt(w.buyTarget, 0)} compra</span>
+            <span>${fmt(w.sellTarget, 0)} venta ↑</span>
+          </div>
+          <div class="bar-track">
+            <div class="bar-buy-zone" style="width: 15%;"></div>
+            <div class="bar-sell-zone" style="width: 15%;"></div>
+            <div class="bar-pointer" style="left: ${pos}%;"></div>
+          </div>
+        </div>`;
+
+      if (w.current < w.buyTarget) zoneLabel = '🟢 En zona de compra';
+      else if (w.current > w.sellTarget * 0.9) zoneLabel = '🔶 Cerca del techo';
+      else if (w.current < w.consensus * 0.85) zoneLabel = '🟢 Buen descuento';
+      else zoneLabel = 'Precio justo';
+    }
+
+    container.innerHTML += `
+      <div class="pos" style="border-radius: 12px;">
+        <div class="pos-top">
+          <div>
+            <div class="pos-ticker">${w.ticker}</div>
+            <div class="pos-name">${w.name}</div>
+          </div>
+          <div>
+            <div class="pos-actual editable" data-field="wl-current" data-idx="${idx}">${fmt(w.current)}</div>
+            <div class="pos-change ${upsideClass}">Potencial ${upside >= 0 ? '+' : ''}${upside.toFixed(1)}%</div>
+          </div>
+        </div>
+        <div class="cells">
+          <div class="cell">
+            <div class="cell-label">Comprar bajo</div>
+            <div class="cell-value green">${fmt(w.buyTarget, 0)}</div>
+          </div>
+          <div class="cell">
+            <div class="cell-label">Consenso</div>
+            <div class="cell-value">${fmt(w.consensus, 0)}</div>
+          </div>
+          <div class="cell">
+            <div class="cell-label">Vender alto</div>
+            <div class="cell-value red">${fmt(w.sellTarget, 0)}</div>
+          </div>
+        </div>
+        ${barHtml}
+        <div class="action-row">
+          <span class="badge ${ratingClass[w.rating]}">${ratingLabel[w.rating]}</span>
+          <span class="recommendation">${zoneLabel}</span>
+        </div>
+        ${w.note ? `<div style="font-size: 11px; color: var(--text-3); margin-top: 8px; padding-top: 8px; border-top: 0.5px solid var(--border);">💡 ${w.note}</div>` : ''}
+        <button class="wl-delete" data-idx="${idx}" style="position: absolute;">×</button>
+      </div>`;
+  });
+  attachEditListeners();
+  document.querySelectorAll('.wl-delete').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const idx = parseInt(e.target.dataset.idx);
+      if (confirm('¿Eliminar ' + data.watchlist[idx].ticker + ' del watchlist?')) {
+        data.watchlist.splice(idx, 1);
+        saveData();
+        renderWatchlist();
+      }
+    });
+  });
+}
+
+function attachEditListeners() {
+  document.querySelectorAll('.editable').forEach(el => {
+    el.addEventListener('click', function(e) {
+      e.stopPropagation();
+      if (this.querySelector('input')) return;
+      const field = this.dataset.field;
+      const idx = parseInt(this.dataset.idx);
+      let currentVal;
+      if (field === 'wl-current') currentVal = data.watchlist[idx].current;
+      else if (field === 'fees') currentVal = data.portfolio[idx].fees || 0;
+      else currentVal = data.portfolio[idx].current;
+      const input = document.createElement('input');
+      input.type = 'number';
+      input.step = '0.01';
+      input.className = 'edit-input';
+      input.value = currentVal;
+      this.innerHTML = '';
+      this.appendChild(input);
+      input.focus();
+      input.select();
+      const commit = () => {
+        const newVal = parseFloat(input.value);
+        if (!isNaN(newVal) && newVal >= 0) {
+          if (field === 'wl-current') data.watchlist[idx].current = newVal;
+          else if (field === 'fees') data.portfolio[idx].fees = newVal;
+          else data.portfolio[idx].current = newVal;
+          saveData();
+        }
+        if (field === 'wl-current') renderWatchlist();
+        else renderPortfolio();
+      };
+      input.addEventListener('blur', commit);
+      input.addEventListener('keypress', (e) => { if (e.key === 'Enter') input.blur(); });
+      input.addEventListener('keydown', (e) => { if (e.key === 'Escape') { if (field === 'wl-current') renderWatchlist(); else renderPortfolio(); } });
+    });
+  });
+}
+
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    const view = tab.dataset.view;
+    document.getElementById('view-portfolio').classList.toggle('hidden', view !== 'portfolio');
+    document.getElementById('view-watchlist').classList.toggle('hidden', view !== 'watchlist');
+  });
+});
+
+document.getElementById('btn-refresh').addEventListener('click', () => {
+  alert('Para actualizar los precios:\n\n1. Toque el precio de cada acción (con el ícono ✎)\n2. Ingrese el precio actual desde su broker\n3. Presione Enter\n\nTodos los cálculos se actualizan automáticamente.');
+});
+
+document.getElementById('btn-add').addEventListener('click', () => {
+  const ticker = document.getElementById('new-ticker').value.trim().toUpperCase();
+  const price = parseFloat(document.getElementById('new-price').value);
+  const buyT = parseFloat(document.getElementById('new-buy').value);
+  const sellT = parseFloat(document.getElementById('new-sell').value);
+  if (!ticker || !price || !buyT || !sellT) return alert('Complete todos los campos: ticker, precio actual, objetivo de compra y venta');
+  const consensus = (buyT + sellT) / 2;
+  data.watchlist.push({ ticker, name: ticker, current: price, buyTarget: buyT, sellTarget: sellT, consensus, rating: 'buy', note: '' });
+  saveData();
+  document.getElementById('new-ticker').value = '';
+  document.getElementById('new-price').value = '';
+  document.getElementById('new-buy').value = '';
+  document.getElementById('new-sell').value = '';
+  renderWatchlist();
+});
+
+document.getElementById('btn-export').addEventListener('click', () => {
+  const json = JSON.stringify(data, null, 2);
+  const blob = new Blob([json], {type: 'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'mi_portafolio_' + new Date().toISOString().split('T')[0] + '.json';
+  a.click();
+  URL.revokeObjectURL(url);
+});
+
+document.getElementById('btn-import').addEventListener('click', () => {
+  document.getElementById('file-import').click();
+});
+
+document.getElementById('file-import').addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    try {
+      const imported = JSON.parse(ev.target.result);
+      if (imported.portfolio && imported.watchlist) {
+        data = imported;
+        saveData();
+        renderPortfolio();
+        renderWatchlist();
+        alert('✅ Datos cargados correctamente');
+      }
+    } catch(err) { alert('❌ Archivo no válido'); }
+  };
+  reader.readAsText(file);
+});
+
+// ==== MODAL: Registrar compra / venta / nueva posición ====
+function openTransactionModal(idx, action) {
+  const isNew = idx === 'new';
+  const isSell = action === 'sell';
+  const p = isNew ? null : data.portfolio[idx];
+
+  const title = isNew ? 'Agregar nueva acción' : (isSell ? `Vender ${p.ticker}` : `Comprar más de ${p.ticker}`);
+  const subtitle = isNew
+    ? 'Registre la primera compra de una acción nueva'
+    : (isSell
+        ? `Actualmente tiene ${p.qty} acciones a $${p.avgCost.toFixed(2)} promedio`
+        : `Actualmente tiene ${p.qty} acciones a $${p.avgCost.toFixed(2)} promedio`);
+
+  const tickerField = isNew ? `
+    <div class="modal-field">
+      <label>Ticker</label>
+      <input type="text" id="tx-ticker" placeholder="Ej: NVDA" style="text-transform: uppercase;" maxlength="8">
+    </div>
+    <div class="modal-field">
+      <label>Nombre completo (opcional)</label>
+      <input type="text" id="tx-name" placeholder="Ej: NVIDIA Corp.">
+    </div>` : '';
+
+  const modalHtml = `
+    <div class="modal-backdrop" id="modal-bd">
+      <div class="modal">
+        <h3>${title}</h3>
+        <p class="sub">${subtitle}</p>
+        ${tickerField}
+        <div class="modal-field">
+          <label>Cantidad de acciones</label>
+          <input type="number" id="tx-qty" placeholder="Ej: 2 o 0.5" step="0.0001" min="0.0001">
+        </div>
+        <div class="modal-field">
+          <label>Precio por acción (USD)</label>
+          <input type="number" id="tx-price" placeholder="Ej: 275.50" step="0.01" min="0.01">
+        </div>
+        <div class="modal-field">
+          <label>Comisión (USD)</label>
+          <input type="number" id="tx-fee" placeholder="Ej: 1.00" step="0.01" min="0" value="1.00">
+        </div>
+        <div class="modal-preview" id="tx-preview" style="display: none;"></div>
+        <div class="modal-btns">
+          <button class="btn-cancel" id="btn-cancel">Cancelar</button>
+          <button class="btn-save" id="btn-save">${isSell ? 'Registrar venta' : 'Registrar compra'}</button>
+        </div>
+      </div>
+    </div>`;
+
+  document.getElementById('modal-container').innerHTML = modalHtml;
+
+  const qtyInput = document.getElementById('tx-qty');
+  const priceInput = document.getElementById('tx-price');
+  const feeInput = document.getElementById('tx-fee');
+  const preview = document.getElementById('tx-preview');
+
+  function updatePreview() {
+    const qty = parseFloat(qtyInput.value);
+    const price = parseFloat(priceInput.value);
+    const fee = parseFloat(feeInput.value) || 0;
+    if (!qty || !price) { preview.style.display = 'none'; return; }
+
+    const txAmount = qty * price;
+    const txTotal = txAmount + fee;
+
+    if (isNew) {
+      preview.innerHTML = `
+        <div><span>Inversión:</span><strong>$${txAmount.toFixed(2)}</strong></div>
+        <div><span>+ Comisión:</span><strong>$${fee.toFixed(2)}</strong></div>
+        <div><span>Costo total:</span><span class="highlight">$${txTotal.toFixed(2)}</span></div>`;
+    } else if (isSell) {
+      if (qty > p.qty) {
+        preview.innerHTML = `<div style="color: var(--red);">⚠️ No puede vender más de ${p.qty} acciones</div>`;
+      } else {
+        const proceeds = txAmount - fee;
+        const costBasis = qty * p.avgCost;
+        const gain = proceeds - costBasis;
+        const gainClass = gain >= 0 ? 'green' : 'red';
+        preview.innerHTML = `
+          <div><span>Ingreso bruto:</span><strong>$${txAmount.toFixed(2)}</strong></div>
+          <div><span>- Comisión:</span><strong>$${fee.toFixed(2)}</strong></div>
+          <div><span>Ingreso neto:</span><strong>$${proceeds.toFixed(2)}</strong></div>
+          <div style="padding-top: 6px; margin-top: 6px; border-top: 0.5px solid var(--border);"><span>Ganancia/pérdida:</span><span class="${gainClass}"><strong>${gain >= 0 ? '+' : ''}$${gain.toFixed(2)}</strong></span></div>
+          <div><span>Quedan:</span><strong>${(p.qty - qty).toFixed(4)} acc.</strong></div>`;
+      }
+    } else {
+      // Buy more
+      const newQty = p.qty + qty;
+      const newInvested = (p.qty * p.avgCost) + txAmount;
+      const newAvg = newInvested / newQty;
+      const newFees = (p.fees || 0) + fee;
+      preview.innerHTML = `
+        <div><span>Nuevas acciones:</span><strong>${newQty.toFixed(4)}</strong></div>
+        <div><span>Nuevo precio prom.:</span><span class="highlight">$${newAvg.toFixed(2)}</span></div>
+        <div><span>Nuevas comisiones:</span><strong>$${newFees.toFixed(2)}</strong></div>
+        <div><span>Costo total:</span><strong>$${(newInvested + newFees).toFixed(2)}</strong></div>`;
+    }
+    preview.style.display = 'block';
+  }
+
+  qtyInput.addEventListener('input', updatePreview);
+  priceInput.addEventListener('input', updatePreview);
+  feeInput.addEventListener('input', updatePreview);
+
+  document.getElementById('btn-cancel').addEventListener('click', closeModal);
+  document.getElementById('modal-bd').addEventListener('click', (e) => { if (e.target.id === 'modal-bd') closeModal(); });
+
+  document.getElementById('btn-save').addEventListener('click', () => {
+    const qty = parseFloat(qtyInput.value);
+    const price = parseFloat(priceInput.value);
+    const fee = parseFloat(feeInput.value) || 0;
+
+    if (!qty || !price || qty <= 0 || price <= 0) { alert('Complete cantidad y precio válidos'); return; }
+
+    if (isNew) {
+      const ticker = document.getElementById('tx-ticker').value.trim().toUpperCase();
+      const name = document.getElementById('tx-name').value.trim() || ticker;
+      if (!ticker) { alert('Ingrese el ticker'); return; }
+      if (data.portfolio.some(x => x.ticker === ticker)) { alert('Ya tiene ' + ticker + ' en su portafolio. Use "Comprar más".'); return; }
+      data.portfolio.push({
+        ticker, name, qty, avgCost: price, fees: fee, current: price,
+        buyTarget: null, sellTarget: null, consensus: null, rating: 'hold'
+      });
+      alert('✅ ' + ticker + ' agregado al portafolio.\n\nNota: Pídale a Claude los precios objetivo de analistas para esta acción.');
+    } else if (isSell) {
+      if (qty > p.qty) { alert('No puede vender más de ' + p.qty + ' acciones'); return; }
+      p.qty = Math.round((p.qty - qty) * 10000) / 10000;
+      if (p.qty < 0.0001) {
+        if (confirm('Ha vendido toda su posición en ' + p.ticker + '. ¿Eliminar del portafolio?')) {
+          data.portfolio.splice(idx, 1);
+        } else {
+          p.qty = 0;
+        }
+      }
+    } else {
+      // Buy more - recalcular promedio ponderado
+      const newQty = p.qty + qty;
+      const newInvested = (p.qty * p.avgCost) + (qty * price);
+      p.avgCost = Math.round((newInvested / newQty) * 10000) / 10000;
+      p.qty = Math.round(newQty * 10000) / 10000;
+      p.fees = Math.round(((p.fees || 0) + fee) * 100) / 100;
+      // Actualizar precio actual al precio de la última compra (es lo más reciente)
+      p.current = price;
+    }
+
+    saveData();
+    renderPortfolio();
+    closeModal();
+  });
+
+  setTimeout(() => { (isNew ? document.getElementById('tx-ticker') : qtyInput).focus(); }, 100);
+}
+
+function closeModal() {
+  document.getElementById('modal-container').innerHTML = '';
+}
+
+// Listener para botones de compra/venta en posiciones
+document.addEventListener('click', (e) => {
+  if (e.target.classList.contains('btn-add-tx') && e.target.dataset.action === 'buy') {
+    openTransactionModal(parseInt(e.target.dataset.idx), 'buy');
+  } else if (e.target.classList.contains('btn-sell-tx') && e.target.dataset.action === 'sell') {
+    openTransactionModal(parseInt(e.target.dataset.idx), 'sell');
+  } else if (e.target.id === 'btn-new-position') {
+    openTransactionModal('new', 'buy');
+  }
+});
+
+renderPortfolio();
+renderWatchlist();
+</script>
+
+</body>
+</html>
