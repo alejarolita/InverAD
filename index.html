@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Mi Portafolio — Precios Justos</title>
+<title>Mi Patrimonio — Dashboard Completo</title>
 <style>
   :root {
     --bg: #f7f7f5;
@@ -121,6 +121,43 @@
   .add-row input:focus { outline: none; border-color: var(--blue); }
   .add-row button { height: 36px; padding: 0 14px; font-size: 13px; font-weight: 500; background: var(--text); color: var(--bg); border: none; border-radius: 6px; cursor: pointer; }
   .footer { font-size: 10px; color: var(--text-3); margin-top: 20px; padding-top: 12px; border-top: 0.5px solid var(--border); line-height: 1.6; }
+  .fx-bar { display: flex; align-items: center; gap: 10px; background: var(--surface-2); padding: 10px 14px; border-radius: 10px; margin-bottom: 14px; flex-wrap: wrap; }
+  .fx-bar label { font-size: 12px; color: var(--text-2); }
+  .fx-bar input { height: 32px; width: 100px; font-size: 13px; padding: 0 10px; border: 0.5px solid var(--border-2); border-radius: 6px; background: var(--surface); color: var(--text); font-family: inherit; }
+  .fx-date { font-size: 11px; color: var(--text-3); margin-left: auto; }
+  .patrimonio-total { background: linear-gradient(135deg, #185fa5 0%, #0f6e56 100%); color: white; border-radius: 14px; padding: 20px 24px; margin-bottom: 14px; text-align: center; }
+  .pt-label { font-size: 12px; opacity: 0.85; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+  .pt-value { font-size: 30px; font-weight: 700; letter-spacing: -0.5px; }
+  .pt-sub { font-size: 14px; opacity: 0.85; margin-top: 4px; }
+  .pt-item { background: var(--surface); border: 0.5px solid var(--border); border-radius: 12px; padding: 14px 16px; margin-bottom: 8px; }
+  .pt-item-top { display: flex; justify-content: space-between; align-items: center; }
+  .pt-item-left { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
+  .pt-icon { font-size: 22px; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; background: var(--surface-2); border-radius: 50%; flex-shrink: 0; }
+  .pt-info { flex: 1; min-width: 0; }
+  .pt-name { font-size: 14px; font-weight: 600; color: var(--text); }
+  .pt-note { font-size: 11px; color: var(--text-2); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .pt-values { text-align: right; flex-shrink: 0; margin-left: 8px; }
+  .pt-val-usd { font-size: 15px; font-weight: 600; color: var(--text); }
+  .pt-val-cop { font-size: 11px; color: var(--text-2); margin-top: 2px; }
+  .pt-pct { display: inline-block; font-size: 11px; font-weight: 500; color: var(--text-2); background: var(--surface-2); padding: 2px 8px; border-radius: 10px; margin-top: 4px; }
+  .pt-update { font-size: 10px; color: var(--text-3); margin-top: 6px; font-style: italic; }
+  .pt-delete { background: none; border: none; color: var(--text-3); cursor: pointer; font-size: 14px; padding: 4px 8px; margin-left: 4px; }
+  .pt-delete:hover { color: var(--red); }
+  .pt-item .editable::after { right: 2px; top: 2px; }
+  .currency-tag { display: inline-block; font-size: 10px; font-weight: 500; color: var(--text-2); background: var(--surface-2); padding: 1px 6px; border-radius: 4px; margin-left: 4px; vertical-align: middle; }
+  .emoji-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-top: 6px; }
+  .emoji-btn { background: var(--surface-2); border: 1px solid transparent; border-radius: 8px; padding: 8px 4px; font-size: 20px; cursor: pointer; transition: all 0.15s; font-family: inherit; }
+  .emoji-btn:hover { background: var(--border); }
+  .emoji-btn.selected { background: var(--blue-bg); border-color: var(--blue); transform: scale(1.05); }
+  .emoji-preview { font-size: 11px; color: var(--text-2); margin-top: 8px; }
+  .emoji-preview span { font-size: 16px; margin-left: 4px; }
+  .currency-selector { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 6px; }
+  .curr-btn { background: var(--surface-2); border: 1.5px solid transparent; border-radius: 8px; padding: 10px; font-size: 14px; font-weight: 500; cursor: pointer; color: var(--text); font-family: inherit; transition: all 0.15s; }
+  .curr-btn:hover { background: var(--border); }
+  .curr-btn.active { background: var(--blue-bg); color: var(--blue); border-color: var(--blue); }
+  @media (max-width: 600px) {
+    .emoji-grid { grid-template-columns: repeat(6, 1fr); }
+  }
   .btn-add-tx { background: var(--blue-bg); color: var(--blue); border: none; padding: 5px 10px; border-radius: 6px; font-size: 11px; font-weight: 500; cursor: pointer; margin-left: 8px; font-family: inherit; }
   .btn-add-tx:hover { opacity: 0.85; }
   .btn-sell-tx { background: var(--surface-2); color: var(--text-2); border: none; padding: 5px 10px; border-radius: 6px; font-size: 11px; font-weight: 500; cursor: pointer; margin-left: 4px; font-family: inherit; }
@@ -163,13 +200,14 @@
 <body>
 
 <header>
-  <h1>Mi portafolio</h1>
-  <p>Buy &amp; Hold · USD · Precios justos de analistas</p>
+  <h1>Mi patrimonio</h1>
+  <p>Buy &amp; Hold · USD &amp; COP · Dashboard completo</p>
 </header>
 
 <div class="tabs">
-  <button class="tab active" data-view="portfolio">Mis posiciones</button>
+  <button class="tab active" data-view="portfolio">Acciones</button>
   <button class="tab" data-view="watchlist">Watchlist</button>
+  <button class="tab" data-view="patrimonio">Patrimonio</button>
 </div>
 
 <div id="view-portfolio">
@@ -235,12 +273,42 @@
   </div>
 </div>
 
+<div id="view-patrimonio" class="hidden">
+  <div class="fx-bar">
+    <label>Tasa USD → COP:</label>
+    <input type="number" id="fx-rate" step="1" min="1000" />
+    <span class="fx-date" id="fx-date"></span>
+  </div>
+
+  <div class="patrimonio-total">
+    <div class="pt-label">Mi patrimonio total</div>
+    <div class="pt-value" id="pt-total-usd">—</div>
+    <div class="pt-sub" id="pt-total-cop">—</div>
+  </div>
+
+  <div class="divers-bar-wrap" style="margin-bottom: 14px;">
+    <div class="divers-label">Distribución por tipo de activo</div>
+    <div class="divers-bar" id="pt-divers-bar"></div>
+    <div class="divers-legend" id="pt-divers-legend"></div>
+  </div>
+
+  <div id="patrimonio-items"></div>
+
+  <div style="text-align: center; margin: 16px 0;">
+    <button class="btn-add-tx" id="btn-new-asset" style="padding: 10px 20px; font-size: 13px;">➕ Agregar activo</button>
+  </div>
+
+  <p style="font-size: 11px; color: var(--text-3); margin-top: 16px; padding: 10px 14px; background: var(--surface-2); border-radius: 8px; line-height: 1.6;">
+    💡 <strong>Acciones</strong> se actualizan automáticamente desde su portafolio. Los demás activos actualícelos al final de cada mes tocando su valor.
+  </p>
+</div>
+
 <p class="footer">Los precios actuales reflejan la última actualización manual (puede tocar ✎ para editarlos). Los precios objetivo de compra y venta son consenso de analistas de Wall Street. Este dashboard es una herramienta personal y no constituye asesoramiento financiero profesional. Para precios en vivo, actualice periódicamente desde su broker.</p>
 
 <div id="modal-container"></div>
 
 <script>
-const STORAGE_KEY = 'mi_portafolio_v6';
+const STORAGE_KEY = 'mi_patrimonio_v9';
 
 const defaultPortfolio = [
   { ticker: 'ADBE', name: 'Adobe Inc.',         qty: 4.0000, avgCost: 250.38, fees: 3.00, current: 254.04, buyTarget: 270,  sellTarget: 605,  consensus: 417,  rating: 'hold' },
@@ -259,14 +327,31 @@ const defaultWatchlist = [
   { ticker: 'UNH',  name: 'UnitedHealth Group',        current: 314.19, buyTarget: 255, sellTarget: 440, consensus: 361, rating: 'buy',     note: 'Salud · En zona de acumulación · Directivos comprando' },
 ];
 
+const defaultPatrimonio = [
+  { id: 1, type: 'acciones',    icon: '📈', name: 'Acciones Wall Street', note: 'Calculado automáticamente desde portafolio', currency: 'USD', value: null, lastUpdate: new Date().toISOString(), auto: true },
+  { id: 2, type: 'fondos',      icon: '💼', name: 'Fondos mutuos / FIC',   note: 'Fondos de inversión colectiva',                 currency: 'COP', value: 0,    lastUpdate: null, auto: false },
+  { id: 3, type: 'finca',       icon: '🏠', name: 'Finca raíz',            note: 'Propiedades inmuebles',                          currency: 'COP', value: 0,    lastUpdate: null, auto: false },
+  { id: 4, type: 'ahorro-usd',  icon: '💵', name: 'Cuentas de ahorro USD', note: 'Cuentas en dólares',                             currency: 'USD', value: 0,    lastUpdate: null, auto: false },
+  { id: 5, type: 'pension',     icon: '🏛️', name: 'Pensión voluntaria',   note: 'AFP / fondo de pensión',                          currency: 'COP', value: 0,    lastUpdate: null, auto: false },
+  { id: 6, type: 'otros',       icon: '✨', name: 'Otros',                 note: 'Otros activos',                                  currency: 'COP', value: 0,    lastUpdate: null, auto: false },
+];
+
+const defaultFxRate = 4100; // Tasa USD → COP aproximada
+
 let data = loadData();
 
 function loadData() {
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) return JSON.parse(saved);
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      // Migración: si faltan datos de patrimonio, los agregamos
+      if (!parsed.patrimonio) parsed.patrimonio = defaultPatrimonio;
+      if (!parsed.fxRate) parsed.fxRate = defaultFxRate;
+      return parsed;
+    }
   } catch(e) {}
-  return { portfolio: defaultPortfolio, watchlist: defaultWatchlist, lastUpdate: new Date().toISOString() };
+  return { portfolio: defaultPortfolio, watchlist: defaultWatchlist, patrimonio: defaultPatrimonio, fxRate: defaultFxRate, lastUpdate: new Date().toISOString() };
 }
 
 function saveData() {
@@ -543,8 +628,301 @@ document.querySelectorAll('.tab').forEach(tab => {
     const view = tab.dataset.view;
     document.getElementById('view-portfolio').classList.toggle('hidden', view !== 'portfolio');
     document.getElementById('view-watchlist').classList.toggle('hidden', view !== 'watchlist');
+    document.getElementById('view-patrimonio').classList.toggle('hidden', view !== 'patrimonio');
+    if (view === 'patrimonio') renderPatrimonio();
   });
 });
+
+// ==== FASE 1: Dashboard de Patrimonio Consolidado ====
+function calcAccionesTotal() {
+  let total = 0;
+  data.portfolio.forEach(p => { total += p.qty * p.current; });
+  return total;
+}
+
+function formatCOP(v) {
+  if (v == null || isNaN(v)) return '—';
+  return '$' + Math.round(v).toLocaleString('es-CO') + ' COP';
+}
+
+function formatUSD(v) {
+  if (v == null || isNaN(v)) return '—';
+  return '$' + Math.round(v).toLocaleString('en-US') + ' USD';
+}
+
+// Convierte cualquier activo a COP para sumar totales
+function toCOP(asset, fxRate) {
+  const val = asset.value || 0;
+  return asset.currency === 'USD' ? val * fxRate : val;
+}
+
+function renderPatrimonio() {
+  // Sincronizar valor de acciones automáticamente
+  const accionesItem = data.patrimonio.find(x => x.type === 'acciones');
+  if (accionesItem) {
+    accionesItem.value = calcAccionesTotal();
+    accionesItem.lastUpdate = new Date().toISOString();
+  }
+
+  const fxInput = document.getElementById('fx-rate');
+  fxInput.value = data.fxRate;
+  document.getElementById('fx-date').textContent = 'Actualice la tasa al día';
+
+  // Calcular total en COP (la moneda base para comparar)
+  let totalCOP = 0;
+  data.patrimonio.forEach(a => { totalCOP += toCOP(a, data.fxRate); });
+  const totalUSD = totalCOP / data.fxRate;
+
+  document.getElementById('pt-total-usd').textContent = '$' + Math.round(totalUSD).toLocaleString('en-US') + ' USD';
+  document.getElementById('pt-total-cop').textContent = formatCOP(totalCOP);
+
+  // Barra de diversificación patrimonial
+  const pColors = ['#185fa5', '#0f6e56', '#d85a30', '#7f77dd', '#854f0b', '#d4537e', '#a32d2d'];
+  const diversBar = document.getElementById('pt-divers-bar');
+  const diversLegend = document.getElementById('pt-divers-legend');
+  diversBar.innerHTML = '';
+  diversLegend.innerHTML = '';
+
+  data.patrimonio.forEach((a, idx) => {
+    const cop = toCOP(a, data.fxRate);
+    const pct = totalCOP > 0 ? (cop / totalCOP * 100) : 0;
+    if (pct > 0) {
+      const color = pColors[idx % pColors.length];
+      diversBar.innerHTML += `<div class="divers-segment" style="width: ${pct}%; background: ${color};" title="${a.name}: ${pct.toFixed(1)}%"></div>`;
+      diversLegend.innerHTML += `<span class="divers-legend-item"><span class="divers-dot" style="background: ${color};"></span>${a.icon} ${pct.toFixed(1)}%</span>`;
+    }
+  });
+
+  // Renderizar cada activo
+  const container = document.getElementById('patrimonio-items');
+  container.innerHTML = '';
+
+  data.patrimonio.forEach((a, idx) => {
+    const cop = toCOP(a, data.fxRate);
+    const pct = totalCOP > 0 ? (cop / totalCOP * 100) : 0;
+    const lastUpdate = a.lastUpdate ? new Date(a.lastUpdate) : null;
+    let updateText = 'Sin actualizar';
+    if (lastUpdate) {
+      const daysAgo = Math.floor((Date.now() - lastUpdate) / (1000 * 60 * 60 * 24));
+      if (daysAgo === 0) updateText = 'Actualizado hoy';
+      else if (daysAgo === 1) updateText = 'Actualizado ayer';
+      else if (daysAgo < 30) updateText = `Actualizado hace ${daysAgo} días`;
+      else if (daysAgo < 60) updateText = `Actualizado hace 1 mes`;
+      else updateText = `⚠️ Actualizado hace ${Math.floor(daysAgo/30)} meses`;
+    }
+
+    const isAuto = a.auto;
+    const valueClass = isAuto ? '' : 'editable';
+    const deleteBtn = (!isAuto && a.id > 6) ? `<button class="pt-delete" data-del-id="${a.id}">🗑️</button>` : '';
+
+    // Mostrar primary en la moneda original, secondary en la otra
+    const primaryValue = a.currency === 'USD' ? formatUSD(a.value) : formatCOP(a.value);
+    const secondaryValue = a.currency === 'USD' ? formatCOP(a.value * data.fxRate) : formatUSD(a.value / data.fxRate);
+    const currencyBadge = a.currency === 'USD' ? '🇺🇸' : '🇨🇴';
+
+    container.innerHTML += `
+      <div class="pt-item">
+        <div class="pt-item-top">
+          <div class="pt-item-left">
+            <div class="pt-icon">${a.icon}</div>
+            <div class="pt-info">
+              <div class="pt-name">${a.name} <span class="currency-tag">${currencyBadge} ${a.currency}</span></div>
+              <div class="pt-note">${a.note || ''}</div>
+            </div>
+          </div>
+          <div class="pt-values">
+            <div class="pt-val-usd ${valueClass}" data-pt-field="value" data-pt-id="${a.id}">${primaryValue.replace(' USD', '').replace(' COP', '')}</div>
+            <div class="pt-val-cop">≈ ${secondaryValue}</div>
+            <div class="pt-pct">${pct.toFixed(1)}% del total</div>
+          </div>
+          ${deleteBtn}
+        </div>
+        <div class="pt-update">${isAuto ? '🔄 ' + updateText + ' · sincronización automática' : updateText}</div>
+      </div>`;
+  });
+
+  attachPatrimonioListeners();
+}
+
+function attachPatrimonioListeners() {
+  // Editar valores (solo los no-auto)
+  document.querySelectorAll('.pt-val-usd.editable').forEach(el => {
+    el.addEventListener('click', function(e) {
+      e.stopPropagation();
+      if (this.querySelector('input')) return;
+      const id = parseInt(this.dataset.ptId);
+      const asset = data.patrimonio.find(x => x.id === id);
+      if (!asset) return;
+      const input = document.createElement('input');
+      input.type = 'number';
+      input.step = asset.currency === 'USD' ? '1' : '1000';
+      input.min = '0';
+      input.className = 'edit-input';
+      input.value = asset.value || 0;
+      input.style.width = '120px';
+      this.innerHTML = '';
+      this.appendChild(input);
+      input.focus();
+      input.select();
+      const commit = () => {
+        const newVal = parseFloat(input.value);
+        if (!isNaN(newVal) && newVal >= 0) {
+          asset.value = newVal;
+          asset.lastUpdate = new Date().toISOString();
+          saveData();
+        }
+        renderPatrimonio();
+      };
+      input.addEventListener('blur', commit);
+      input.addEventListener('keypress', (e) => { if (e.key === 'Enter') input.blur(); });
+      input.addEventListener('keydown', (e) => { if (e.key === 'Escape') renderPatrimonio(); });
+    });
+  });
+
+  // Eliminar activos personalizados
+  document.querySelectorAll('.pt-delete').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const id = parseInt(e.target.closest('button').dataset.delId);
+      const asset = data.patrimonio.find(x => x.id === id);
+      if (asset && confirm('¿Eliminar "' + asset.name + '" del patrimonio?')) {
+        data.patrimonio = data.patrimonio.filter(x => x.id !== id);
+        saveData();
+        renderPatrimonio();
+      }
+    });
+  });
+}
+
+// Editar tasa de cambio
+document.getElementById('fx-rate').addEventListener('change', (e) => {
+  const newRate = parseFloat(e.target.value);
+  if (!isNaN(newRate) && newRate > 0) {
+    data.fxRate = newRate;
+    saveData();
+    renderPatrimonio();
+  }
+});
+
+// Agregar activo personalizado con modal elegante
+document.getElementById('btn-new-asset').addEventListener('click', () => {
+  openNewAssetModal();
+});
+
+function openNewAssetModal() {
+  const emojis = ['💰', '🚗', '🪙', '💎', '🏖️', '🎨', '⌚', '📀', '🏦', '🐎', '🎸', '🪴', '✨'];
+  const emojiOptions = emojis.map(e => `<button type="button" class="emoji-btn" data-emoji="${e}">${e}</button>`).join('');
+
+  const modalHtml = `
+    <div class="modal-backdrop" id="modal-bd">
+      <div class="modal">
+        <h3>Agregar nuevo activo</h3>
+        <p class="sub">Registre un activo personalizado a su patrimonio</p>
+
+        <div class="modal-field">
+          <label>Nombre del activo</label>
+          <input type="text" id="asset-name" placeholder="Ej: Carro, Cripto, Oro, Apartamento..." maxlength="40">
+        </div>
+
+        <div class="modal-field">
+          <label>Ícono (toque uno)</label>
+          <div class="emoji-grid">${emojiOptions}</div>
+          <input type="hidden" id="asset-icon" value="💰">
+          <div class="emoji-preview">Seleccionado: <span id="emoji-preview-char">💰</span></div>
+        </div>
+
+        <div class="modal-field">
+          <label>Moneda</label>
+          <div class="currency-selector">
+            <button type="button" class="curr-btn" data-cur="COP">🇨🇴 COP</button>
+            <button type="button" class="curr-btn active" data-cur="USD">🇺🇸 USD</button>
+          </div>
+          <input type="hidden" id="asset-currency" value="USD">
+        </div>
+
+        <div class="modal-field">
+          <label>Valor actual <span id="curr-label">(USD)</span></label>
+          <input type="number" id="asset-value" placeholder="0" step="1" min="0">
+        </div>
+
+        <div class="modal-field">
+          <label>Nota (opcional)</label>
+          <input type="text" id="asset-note" placeholder="Ej: Chevrolet 2023, Bitcoin en Binance...">
+        </div>
+
+        <div class="modal-btns">
+          <button class="btn-cancel" id="btn-cancel">Cancelar</button>
+          <button class="btn-save" id="btn-save">Agregar activo</button>
+        </div>
+      </div>
+    </div>`;
+
+  document.getElementById('modal-container').innerHTML = modalHtml;
+
+  // Selector de emoji
+  document.querySelectorAll('.emoji-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.emoji-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      const emoji = btn.dataset.emoji;
+      document.getElementById('asset-icon').value = emoji;
+      document.getElementById('emoji-preview-char').textContent = emoji;
+    });
+  });
+  // Seleccionar el primero por defecto
+  document.querySelector('.emoji-btn').classList.add('selected');
+
+  // Selector de moneda
+  document.querySelectorAll('.curr-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.curr-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const cur = btn.dataset.cur;
+      document.getElementById('asset-currency').value = cur;
+      document.getElementById('curr-label').textContent = '(' + cur + ')';
+      // Ajustar placeholder según moneda
+      const valInput = document.getElementById('asset-value');
+      valInput.step = cur === 'USD' ? '1' : '1000';
+    });
+  });
+
+  // Cancelar
+  document.getElementById('btn-cancel').addEventListener('click', closeModal);
+  document.getElementById('modal-bd').addEventListener('click', (e) => {
+    if (e.target.id === 'modal-bd') closeModal();
+  });
+
+  // Guardar
+  document.getElementById('btn-save').addEventListener('click', () => {
+    const name = document.getElementById('asset-name').value.trim();
+    const icon = document.getElementById('asset-icon').value;
+    const currency = document.getElementById('asset-currency').value;
+    const value = parseFloat(document.getElementById('asset-value').value);
+    const note = document.getElementById('asset-note').value.trim() || 'Activo personalizado';
+
+    if (!name) { alert('Por favor ingrese un nombre para el activo'); return; }
+    if (isNaN(value) || value < 0) { alert('Por favor ingrese un valor válido'); return; }
+
+    const maxId = Math.max(...data.patrimonio.map(x => x.id), 6);
+    data.patrimonio.push({
+      id: maxId + 1,
+      type: 'custom',
+      icon: icon,
+      name: name,
+      note: note,
+      currency: currency,
+      value: value,
+      lastUpdate: new Date().toISOString(),
+      auto: false
+    });
+    saveData();
+    closeModal();
+    renderPatrimonio();
+  });
+
+  // Foco inicial en el nombre
+  setTimeout(() => document.getElementById('asset-name').focus(), 100);
+}
 
 document.getElementById('btn-refresh').addEventListener('click', () => {
   alert('Para actualizar los precios:\n\n1. Toque el precio de cada acción (con el ícono ✎)\n2. Ingrese el precio actual desde su broker\n3. Presione Enter\n\nTodos los cálculos se actualizan automáticamente.');
