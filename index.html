@@ -126,6 +126,29 @@
   .fx-bar input { height: 32px; width: 100px; font-size: 13px; padding: 0 10px; border: 0.5px solid var(--border-2); border-radius: 6px; background: var(--surface); color: var(--text); font-family: inherit; }
   .fx-date { font-size: 11px; color: var(--text-3); margin-left: auto; }
   .patrimonio-total { background: linear-gradient(135deg, #185fa5 0%, #0f6e56 100%); color: white; border-radius: 14px; padding: 20px 24px; margin-bottom: 14px; text-align: center; }
+  .pt-item-rent { margin-top: 8px; padding-top: 8px; border-top: 0.5px dashed var(--border); display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  .pt-item-rent-label { font-size: 10px; color: var(--text-3); }
+  .pt-item-rent-value { font-size: 13px; font-weight: 600; }
+  .pt-item-rent-sub { font-size: 11px; opacity: 0.8; }
+  .pt-item-rent-missing { font-size: 10px; color: var(--blue); background: transparent; border: 0.5px dashed var(--border-2); padding: 3px 8px; border-radius: 6px; cursor: pointer; font-family: inherit; }
+  .pt-item-rent-missing:hover { background: var(--surface-2); }
+  .btn-month-add, .btn-month-view { font-size: 11px; padding: 6px 10px; border-radius: 6px; cursor: pointer; font-family: inherit; font-weight: 500; border: none; flex: 1; }
+  .btn-month-add { background: var(--blue-bg); color: var(--blue); }
+  .btn-month-add:hover { opacity: 0.85; }
+  .btn-month-view { background: var(--surface-2); color: var(--text-2); border: 0.5px solid var(--border); }
+  .btn-month-view:hover { background: var(--border); }
+  .history-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; padding: 8px 10px; font-size: 11px; border-bottom: 0.5px solid var(--border); }
+  .history-row:last-child { border-bottom: none; }
+  .history-row .h-label { color: var(--text-3); font-size: 10px; }
+  .history-row .h-value { font-weight: 500; }
+  .history-month-title { font-weight: 600; font-size: 13px; padding: 8px 10px; background: var(--surface-2); border-radius: 6px 6px 0 0; }
+  .history-block { border: 0.5px solid var(--border); border-radius: 8px; margin-bottom: 8px; overflow: hidden; }
+  .pt-rentabilidad-box { margin-top: 16px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,0.25); }
+  .pt-rent-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+  .pt-rent-row-small { opacity: 0.85; }
+  .pt-rent-label { font-size: 12px; color: rgba(255,255,255,0.9); }
+  .pt-rent-value { font-size: 18px; font-weight: 700; color: white; }
+  .pt-rent-sub { font-size: 13px; font-weight: 500; color: rgba(255,255,255,0.95); }
   .pt-label { font-size: 12px; opacity: 0.85; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
   .pt-value { font-size: 30px; font-weight: 700; letter-spacing: -0.5px; }
   .pt-sub { font-size: 14px; opacity: 0.85; margin-top: 4px; }
@@ -284,6 +307,16 @@
     <div class="pt-label">Mi patrimonio total</div>
     <div class="pt-value" id="pt-total-usd">—</div>
     <div class="pt-sub" id="pt-total-cop">—</div>
+    <div class="pt-rentabilidad-box">
+      <div class="pt-rent-row">
+        <span class="pt-rent-label">Rentabilidad patrimonio</span>
+        <span class="pt-rent-value" id="pt-rent-pct">—</span>
+      </div>
+      <div class="pt-rent-row pt-rent-row-small">
+        <span class="pt-rent-label">Ganancia/Pérdida</span>
+        <span class="pt-rent-sub" id="pt-rent-abs">—</span>
+      </div>
+    </div>
   </div>
 
   <div class="divers-bar-wrap" style="margin-bottom: 14px;">
@@ -676,6 +709,74 @@ function renderPatrimonio() {
   document.getElementById('pt-total-usd').textContent = '$' + Math.round(totalUSD).toLocaleString('en-US') + ' USD';
   document.getElementById('pt-total-cop').textContent = formatCOP(totalCOP);
 
+  // Calcular rentabilidad del patrimonio completo (solo activos con datos)
+  let totalInvertidoCOP = 0, totalActualConDatoCOP = 0;
+
+  data.patrimonio.forEach(a => {
+    if (a.auto) {
+      // Acciones: el valor inicial es el costo real (invertido + comisiones)
+      let invertido = 0, feesAcc = 0;
+      data.portfolio.forEach(p => {
+        invertido += p.qty * p.avgCost;
+        feesAcc += (p.fees || 0);
+      });
+      const costoRealUSD = invertido + feesAcc;
+      const costoRealCOP = costoRealUSD * data.fxRate;
+      totalInvertidoCOP += costoRealCOP;
+      totalActualConDatoCOP += toCOP(a, data.fxRate);
+    } else if ((a.rentType === 'initial' || (!a.rentType && a.initialValue)) && a.initialValue && a.initialValue > 0) {
+      // Activos con valor inicial
+      const initCOP = a.currency === 'USD' ? a.initialValue * data.fxRate : a.initialValue;
+      totalInvertidoCOP += initCOP;
+      totalActualConDatoCOP += toCOP(a, data.fxRate);
+    } else if (a.rentType === 'fixed' && a.fixedRate && a.startDate) {
+      // Activos con tasa fija: calcular valor proyectado con intereses
+      const start = new Date(a.startDate);
+      const days = Math.max(0, Math.floor((Date.now() - start) / (1000 * 60 * 60 * 24)));
+      const dailyRate = Math.pow(1 + a.fixedRate / 100, 1 / 365) - 1;
+      const factor = Math.pow(1 + dailyRate, days);
+      const valorActualConInteres = a.value * factor;
+      const valorInicialCOP = a.currency === 'USD' ? a.value * data.fxRate : a.value;
+      const valorActualCOP = a.currency === 'USD' ? valorActualConInteres * data.fxRate : valorActualConInteres;
+      totalInvertidoCOP += valorInicialCOP;
+      totalActualConDatoCOP += valorActualCOP;
+    } else if (a.rentType === 'monthly' && a.monthlyRecords && a.monthlyRecords.length > 0) {
+      // Activos con aportes mensuales
+      const totalAportado = a.monthlyRecords.reduce((sum, r) => sum + (r.aporte || 0), 0);
+      const totalRendimiento = a.monthlyRecords.reduce((sum, r) => sum + (r.rendimiento || 0), 0);
+      const aportadoCOP = a.currency === 'USD' ? totalAportado * data.fxRate : totalAportado;
+      const actualCOP = aportadoCOP + (a.currency === 'USD' ? totalRendimiento * data.fxRate : totalRendimiento);
+      totalInvertidoCOP += aportadoCOP;
+      totalActualConDatoCOP += actualCOP;
+    }
+  });
+
+  const rentAbsCOP = totalActualConDatoCOP - totalInvertidoCOP;
+  const rentAbsUSD = rentAbsCOP / data.fxRate;
+  const rentPct = totalInvertidoCOP > 0 ? (rentAbsCOP / totalInvertidoCOP * 100) : 0;
+  const rentColor = rentAbsCOP >= 0 ? '#4dff4d' : '#ff9a9a';
+
+  const rentPctEl = document.getElementById('pt-rent-pct');
+  const rentAbsEl = document.getElementById('pt-rent-abs');
+  if (rentPctEl) {
+    if (totalInvertidoCOP > 0) {
+      rentPctEl.textContent = (rentPct >= 0 ? '+' : '') + rentPct.toFixed(2) + '%';
+      rentPctEl.style.color = rentColor;
+    } else {
+      rentPctEl.textContent = '—';
+      rentPctEl.style.color = 'rgba(255,255,255,0.6)';
+    }
+  }
+  if (rentAbsEl) {
+    if (totalInvertidoCOP > 0) {
+      rentAbsEl.textContent = (rentAbsUSD >= 0 ? '+$' : '-$') + Math.abs(Math.round(rentAbsUSD)).toLocaleString('en-US') + ' USD';
+      rentAbsEl.style.color = rentColor;
+    } else {
+      rentAbsEl.textContent = 'Configure rentabilidad en sus activos';
+      rentAbsEl.style.color = 'rgba(255,255,255,0.6)';
+    }
+  }
+
   // Barra de diversificación patrimonial
   const pColors = ['#185fa5', '#0f6e56', '#d85a30', '#7f77dd', '#854f0b', '#d4537e', '#a32d2d'];
   const diversBar = document.getElementById('pt-divers-bar');
@@ -720,14 +821,137 @@ function renderPatrimonio() {
     const secondaryValue = a.currency === 'USD' ? formatCOP(a.value * data.fxRate) : formatUSD(a.value / data.fxRate);
     const currencyBadge = a.currency === 'USD' ? '🇺🇸' : '🇨🇴';
 
+    // Calcular rentabilidad del activo según su tipo
+    let rentHtml = '';
+    const rentType = a.rentType || (a.auto ? 'auto' : (a.initialValue ? 'initial' : 'none'));
+
+    if (a.auto) {
+      // Activo automático (acciones): usar los datos del portafolio
+      let invertido = 0, actual = 0, feesAcc = 0;
+      data.portfolio.forEach(p => {
+        invertido += p.qty * p.avgCost;
+        actual += p.qty * p.current;
+        feesAcc += (p.fees || 0);
+      });
+      const costoReal = invertido + feesAcc;
+      const rentAbs = actual - costoReal;
+      const rentPct = costoReal > 0 ? (rentAbs / costoReal * 100) : 0;
+      const rentColor = rentAbs >= 0 ? 'var(--green)' : 'var(--red)';
+      const sign = rentAbs >= 0 ? '+' : '-';
+      rentHtml = `
+        <div class="pt-item-rent">
+          <span class="pt-item-rent-label">Rentabilidad (auto)</span>
+          <span>
+            <span class="pt-item-rent-value" style="color: ${rentColor};">${sign}${Math.abs(rentPct).toFixed(2)}%</span>
+            <span class="pt-item-rent-sub" style="color: ${rentColor};">(${sign}$${Math.abs(Math.round(rentAbs)).toLocaleString('en-US')} USD)</span>
+          </span>
+        </div>`;
+    } else if (rentType === 'initial' && a.initialValue && a.initialValue > 0) {
+      // Opción A: Por valor inicial
+      const rentAbs = a.value - a.initialValue;
+      const rentPct = (rentAbs / a.initialValue) * 100;
+      const rentColor = rentAbs >= 0 ? 'var(--green)' : 'var(--red)';
+      const sign = rentAbs >= 0 ? '+' : '-';
+      const curSymbol = '$';
+      const curSuffix = a.currency === 'USD' ? ' USD' : ' COP';
+      rentHtml = `
+        <div class="pt-item-rent">
+          <span class="pt-item-rent-label" style="cursor: pointer;" data-pt-rent-cfg="${a.id}" title="Tocar para editar">Desde ${curSymbol}${Math.round(a.initialValue).toLocaleString('en-US')}${curSuffix} ✎</span>
+          <span>
+            <span class="pt-item-rent-value" style="color: ${rentColor};">${sign}${Math.abs(rentPct).toFixed(2)}%</span>
+            <span class="pt-item-rent-sub" style="color: ${rentColor};">(${sign}${curSymbol}${Math.abs(Math.round(rentAbs)).toLocaleString('en-US')}${curSuffix})</span>
+          </span>
+        </div>`;
+    } else if (rentType === 'fixed' && a.fixedRate) {
+      // Opción B: Tasa fija (CDT, cuentas con interés)
+      const rate = a.fixedRate; // tasa EA en %
+      const startDate = a.startDate ? new Date(a.startDate) : null;
+      let interesesHtml = '';
+      if (startDate) {
+        const now = new Date();
+        const days = Math.max(0, Math.floor((now - startDate) / (1000 * 60 * 60 * 24)));
+        // Interés acumulado con interés compuesto diario aproximado
+        const dailyRate = Math.pow(1 + rate / 100, 1 / 365) - 1;
+        const factor = Math.pow(1 + dailyRate, days);
+        const valorEstimado = a.value * factor;
+        const intereses = valorEstimado - a.value;
+        const curSymbol = '$';
+        const curSuffix = a.currency === 'USD' ? ' USD' : ' COP';
+        interesesHtml = `
+          <span class="pt-item-rent-sub" style="color: var(--green);">+${curSymbol}${Math.round(intereses).toLocaleString('en-US')}${curSuffix} (${days} días)</span>`;
+      }
+      rentHtml = `
+        <div class="pt-item-rent">
+          <span class="pt-item-rent-label" style="cursor: pointer;" data-pt-rent-cfg="${a.id}" title="Tocar para editar">Tasa fija ${rate.toFixed(2)}% EA ✎</span>
+          <span style="text-align: right;">
+            <span class="pt-item-rent-value" style="color: var(--green);">${rate.toFixed(2)}%</span>
+            <div>${interesesHtml}</div>
+          </span>
+        </div>`;
+    } else if (rentType === 'none') {
+      // Opción C: Sin rentabilidad
+      rentHtml = `
+        <div class="pt-item-rent">
+          <span class="pt-item-rent-label" style="cursor: pointer;" data-pt-rent-cfg="${a.id}" title="Tocar para configurar">Sin rentabilidad ✎</span>
+          <span class="pt-item-rent-sub" style="color: var(--text-3);">—</span>
+        </div>`;
+    } else if (rentType === 'monthly') {
+      // Opción D: FIC / Pensión voluntaria con extractos mensuales
+      const records = a.monthlyRecords || [];
+      const totalAportado = records.reduce((sum, r) => sum + (r.aporte || 0), 0);
+      const totalRendimiento = records.reduce((sum, r) => sum + (r.rendimiento || 0), 0);
+      const rentPct = totalAportado > 0 ? (totalRendimiento / totalAportado * 100) : 0;
+      const curSymbol = '$';
+      const curSuffix = a.currency === 'USD' ? ' USD' : ' COP';
+
+      let ultimoMes = '—';
+      let ultimoRend = '';
+      if (records.length > 0) {
+        const last = records[records.length - 1];
+        const d = new Date(last.date);
+        ultimoMes = d.toLocaleDateString('es-ES', {month: 'short', year: 'numeric'});
+        const rendSign = last.rendimiento >= 0 ? '+' : '';
+        ultimoRend = `${rendSign}${curSymbol}${Math.round(last.rendimiento).toLocaleString('en-US')}${curSuffix}`;
+      }
+
+      const rentColor = totalRendimiento >= 0 ? 'var(--green)' : 'var(--red)';
+      const sign = totalRendimiento >= 0 ? '+' : '-';
+
+      rentHtml = `
+        <div class="pt-item-rent" style="display: block;">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span class="pt-item-rent-label" style="cursor: pointer;" data-pt-rent-cfg="${a.id}" title="Tocar para configurar">Aportes mensuales ✎</span>
+            <span>
+              <span class="pt-item-rent-value" style="color: ${rentColor};">${sign}${Math.abs(rentPct).toFixed(2)}%</span>
+              <span class="pt-item-rent-sub" style="color: ${rentColor};">(${sign}${curSymbol}${Math.abs(Math.round(totalRendimiento)).toLocaleString('en-US')}${curSuffix})</span>
+            </span>
+          </div>
+          <div style="display: flex; justify-content: space-between; font-size: 10px; color: var(--text-3); margin-top: 4px;">
+            <span>Aportado: ${curSymbol}${Math.round(totalAportado).toLocaleString('en-US')}${curSuffix} · ${records.length} meses</span>
+            <span>${ultimoMes !== '—' ? `Último: ${ultimoMes} (${ultimoRend})` : 'Sin registros'}</span>
+          </div>
+          <div style="display: flex; gap: 6px; margin-top: 8px;">
+            <button class="btn-month-add" data-pt-month="${a.id}">📅 Registrar mes</button>
+            ${records.length > 0 ? `<button class="btn-month-view" data-pt-history="${a.id}">📊 Ver historial</button>` : ''}
+          </div>
+        </div>`;
+    } else {
+      // Sin configurar
+      rentHtml = `
+        <div class="pt-item-rent">
+          <span class="pt-item-rent-label">Rentabilidad</span>
+          <button class="pt-item-rent-missing" data-pt-rent-cfg="${a.id}">+ configurar</button>
+        </div>`;
+    }
+
     container.innerHTML += `
       <div class="pt-item">
         <div class="pt-item-top">
           <div class="pt-item-left">
             <div class="pt-icon">${a.icon}</div>
             <div class="pt-info">
-              <div class="pt-name">${a.name} <span class="currency-tag">${currencyBadge} ${a.currency}</span></div>
-              <div class="pt-note">${a.note || ''}</div>
+              <div class="pt-name"><span class="pt-name-text editable" data-pt-field="name" data-pt-id="${a.id}">${a.name}</span> <span class="currency-tag">${currencyBadge} ${a.currency}</span></div>
+              <div class="pt-note editable" data-pt-field="note" data-pt-id="${a.id}">${a.note || '+ agregar nota'}</div>
             </div>
           </div>
           <div class="pt-values">
@@ -737,6 +961,7 @@ function renderPatrimonio() {
           </div>
           ${deleteBtn}
         </div>
+        ${rentHtml}
         <div class="pt-update">${isAuto ? '🔄 ' + updateText + ' · sincronización automática' : updateText}</div>
       </div>`;
   });
@@ -776,6 +1001,48 @@ function attachPatrimonioListeners() {
       input.addEventListener('blur', commit);
       input.addEventListener('keypress', (e) => { if (e.key === 'Enter') input.blur(); });
       input.addEventListener('keydown', (e) => { if (e.key === 'Escape') renderPatrimonio(); });
+    });
+  });
+
+  // Editar nombre y nota de los activos
+  document.querySelectorAll('.pt-name-text.editable, .pt-note.editable').forEach(el => {
+    el.addEventListener('click', function(e) {
+      e.stopPropagation();
+      if (this.querySelector('input')) return;
+      const id = parseInt(this.dataset.ptId);
+      const field = this.dataset.ptField;
+      const asset = data.patrimonio.find(x => x.id === id);
+      if (!asset) return;
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.className = 'edit-input';
+      input.value = asset[field] || '';
+      input.placeholder = field === 'name' ? 'Nombre del activo' : 'Agregar nota';
+      input.style.width = field === 'name' ? '180px' : '220px';
+      input.style.fontSize = field === 'name' ? '14px' : '11px';
+      this.innerHTML = '';
+      this.appendChild(input);
+      input.focus();
+      input.select();
+      const commit = () => {
+        const newVal = input.value.trim();
+        if (field === 'name' && !newVal) { renderPatrimonio(); return; }
+        asset[field] = newVal;
+        saveData();
+        renderPatrimonio();
+      };
+      input.addEventListener('blur', commit);
+      input.addEventListener('keypress', (e) => { if (e.key === 'Enter') input.blur(); });
+      input.addEventListener('keydown', (e) => { if (e.key === 'Escape') renderPatrimonio(); });
+    });
+  });
+
+  // Configurar rentabilidad de un activo (abre modal)
+  document.querySelectorAll('[data-pt-rent-cfg]').forEach(el => {
+    el.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const id = parseInt(e.currentTarget.dataset.ptRentCfg);
+      openRentabilidadModal(id);
     });
   });
 
@@ -1135,6 +1402,343 @@ function closeModal() {
   document.getElementById('modal-container').innerHTML = '';
 }
 
+// Modal para configurar rentabilidad de activos de patrimonio
+function openRentabilidadModal(assetId) {
+  const asset = data.patrimonio.find(x => x.id === assetId);
+  if (!asset) return;
+  const curLabel = asset.currency === 'USD' ? 'USD' : 'COP';
+  const currentType = asset.rentType || (asset.initialValue ? 'initial' : 'none');
+
+  const modalHtml = `
+    <div class="modal-backdrop" id="modal-bd">
+      <div class="modal" style="max-width: 440px;">
+        <h3>Rentabilidad de "${asset.name}"</h3>
+        <p class="sub">¿Cómo quiere calcular la rentabilidad de este activo?</p>
+
+        <div class="currency-selector" style="grid-template-columns: 1fr; gap: 8px; margin-bottom: 14px;">
+          <button class="curr-btn ${currentType === 'initial' ? 'active' : ''}" data-rent-type="initial">
+            <div style="font-weight: 600; text-align: left;">🅰️ Automática por valor inicial</div>
+            <div style="font-size: 11px; color: var(--text-3); text-align: left; margin-top: 2px;">Para finca raíz, fondos, valores que fluctúan</div>
+          </button>
+          <button class="curr-btn ${currentType === 'fixed' ? 'active' : ''}" data-rent-type="fixed">
+            <div style="font-weight: 600; text-align: left;">🅱️ Tasa fija (interés declarado)</div>
+            <div style="font-size: 11px; color: var(--text-3); text-align: left; margin-top: 2px;">Para CDTs, cuentas USD con interés</div>
+          </button>
+          <button class="curr-btn ${currentType === 'monthly' ? 'active' : ''}" data-rent-type="monthly">
+            <div style="font-weight: 600; text-align: left;">🅳 FIC / Pensión con extractos mensuales</div>
+            <div style="font-size: 11px; color: var(--text-3); text-align: left; margin-top: 2px;">Usted registra saldo y rendimiento cada mes</div>
+          </button>
+          <button class="curr-btn ${currentType === 'none' ? 'active' : ''}" data-rent-type="none">
+            <div style="font-weight: 600; text-align: left;">🅲 Sin rentabilidad</div>
+            <div style="font-size: 11px; color: var(--text-3); text-align: left; margin-top: 2px;">No calcular rentabilidad para este activo</div>
+          </button>
+        </div>
+
+        <div id="rent-fields-initial" style="display: ${currentType === 'initial' ? 'block' : 'none'};">
+          <div class="modal-field">
+            <label>Valor inicial (${curLabel})</label>
+            <input type="number" id="rent-initial" step="0.01" min="0" value="${asset.initialValue || ''}" placeholder="Ej: 180000000">
+          </div>
+          <div class="modal-preview" style="display: block; font-size: 11px;">
+            💡 La rentabilidad será: (Valor actual − Valor inicial) / Valor inicial<br>
+            Valor actual: $${Math.round(asset.value).toLocaleString('en-US')} ${curLabel}
+          </div>
+        </div>
+
+        <div id="rent-fields-fixed" style="display: ${currentType === 'fixed' ? 'block' : 'none'};">
+          <div class="modal-field">
+            <label>Tasa efectiva anual (% EA)</label>
+            <input type="number" id="rent-rate" step="0.01" min="0" value="${asset.fixedRate || ''}" placeholder="Ej: 4.5">
+          </div>
+          <div class="modal-field">
+            <label>Fecha de inicio (para calcular intereses)</label>
+            <input type="date" id="rent-start" value="${asset.startDate || ''}">
+          </div>
+          <div class="modal-preview" style="display: block; font-size: 11px;">
+            💡 Se mostrará la tasa declarada y los intereses acumulados desde la fecha de inicio
+          </div>
+        </div>
+
+        <div id="rent-fields-none" style="display: ${currentType === 'none' ? 'block' : 'none'};">
+          <div class="modal-preview" style="display: block; font-size: 11px;">
+            💡 Este activo no mostrará cálculo de rentabilidad. Solo verá su valor actual.
+          </div>
+        </div>
+
+        <div id="rent-fields-monthly" style="display: ${currentType === 'monthly' ? 'block' : 'none'};">
+          <div class="modal-preview" style="display: block; font-size: 11px;">
+            💡 Cada mes, cuando reciba su extracto del FIC o pensión voluntaria, entra aquí y registra dos datos simples: saldo al cierre del mes y rendimiento reportado. La app calcula los aportes automáticamente.
+          </div>
+        </div>
+
+        <div class="modal-btns">
+          <button class="btn-cancel" id="btn-rent-cancel">Cancelar</button>
+          <button class="btn-save" id="btn-rent-save">Guardar</button>
+        </div>
+      </div>
+    </div>`;
+
+  document.getElementById('modal-container').innerHTML = modalHtml;
+
+  let selectedType = currentType;
+
+  // Manejar selección de tipo
+  document.querySelectorAll('[data-rent-type]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      selectedType = btn.dataset.rentType;
+      document.querySelectorAll('[data-rent-type]').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('rent-fields-initial').style.display = selectedType === 'initial' ? 'block' : 'none';
+      document.getElementById('rent-fields-fixed').style.display = selectedType === 'fixed' ? 'block' : 'none';
+      document.getElementById('rent-fields-none').style.display = selectedType === 'none' ? 'block' : 'none';
+      document.getElementById('rent-fields-monthly').style.display = selectedType === 'monthly' ? 'block' : 'none';
+    });
+  });
+
+  document.getElementById('btn-rent-cancel').addEventListener('click', closeModal);
+  document.getElementById('modal-bd').addEventListener('click', (e) => { if (e.target.id === 'modal-bd') closeModal(); });
+
+  document.getElementById('btn-rent-save').addEventListener('click', () => {
+    asset.rentType = selectedType;
+
+    if (selectedType === 'initial') {
+      const val = parseFloat(document.getElementById('rent-initial').value);
+      if (isNaN(val) || val < 0) { alert('Ingrese un valor inicial válido'); return; }
+      asset.initialValue = val;
+      delete asset.fixedRate;
+      delete asset.startDate;
+      delete asset.monthlyRecords;
+    } else if (selectedType === 'fixed') {
+      const rate = parseFloat(document.getElementById('rent-rate').value);
+      const startDate = document.getElementById('rent-start').value;
+      if (isNaN(rate) || rate < 0) { alert('Ingrese una tasa válida'); return; }
+      if (!startDate) { alert('Ingrese la fecha de inicio'); return; }
+      asset.fixedRate = rate;
+      asset.startDate = startDate;
+      delete asset.initialValue;
+      delete asset.monthlyRecords;
+    } else if (selectedType === 'monthly') {
+      // Inicializar array de registros si no existe
+      if (!asset.monthlyRecords) asset.monthlyRecords = [];
+      delete asset.initialValue;
+      delete asset.fixedRate;
+      delete asset.startDate;
+    } else {
+      delete asset.initialValue;
+      delete asset.fixedRate;
+      delete asset.startDate;
+      delete asset.monthlyRecords;
+    }
+
+    saveData();
+    renderPatrimonio();
+    closeModal();
+  });
+}
+
+// Modal para registrar un mes nuevo (saldo + rendimiento)
+function openMonthlyRecordModal(assetId) {
+  const asset = data.patrimonio.find(x => x.id === assetId);
+  if (!asset) return;
+  if (!asset.monthlyRecords) asset.monthlyRecords = [];
+
+  const curSymbol = '$';
+  const curSuffix = asset.currency === 'USD' ? ' USD' : ' COP';
+  const saldoAnterior = asset.monthlyRecords.length > 0
+    ? asset.monthlyRecords[asset.monthlyRecords.length - 1].saldo
+    : 0;
+
+  // Fecha por defecto: primer día del mes anterior al actual
+  const now = new Date();
+  const defaultDate = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString().split('T')[0];
+
+  const modalHtml = `
+    <div class="modal-backdrop" id="modal-bd">
+      <div class="modal" style="max-width: 440px;">
+        <h3>Registrar mes — ${asset.name}</h3>
+        <p class="sub">Tome estos datos de su extracto mensual del banco/AFP</p>
+
+        <div class="modal-field">
+          <label>Mes del extracto</label>
+          <input type="month" id="month-date" value="${defaultDate.substring(0, 7)}">
+        </div>
+
+        <div class="modal-field">
+          <label>Saldo al cierre del mes (${asset.currency})</label>
+          <input type="number" id="month-saldo" step="0.01" min="0" placeholder="Ej: 12500000">
+        </div>
+
+        <div class="modal-field">
+          <label>Rendimiento del mes (${asset.currency})</label>
+          <input type="number" id="month-rendimiento" step="0.01" placeholder="Ej: 45000">
+        </div>
+
+        <div class="modal-preview" id="month-preview" style="display: none;"></div>
+
+        ${saldoAnterior > 0 ? `<div style="font-size: 11px; color: var(--text-3); margin-top: 8px;">Saldo último registro: ${curSymbol}${Math.round(saldoAnterior).toLocaleString('en-US')}${curSuffix}</div>` : ''}
+
+        <div class="modal-btns">
+          <button class="btn-cancel" id="btn-month-cancel">Cancelar</button>
+          <button class="btn-save" id="btn-month-save">Guardar</button>
+        </div>
+      </div>
+    </div>`;
+
+  document.getElementById('modal-container').innerHTML = modalHtml;
+
+  // Preview del aporte calculado
+  const updatePreview = () => {
+    const saldo = parseFloat(document.getElementById('month-saldo').value);
+    const rendimiento = parseFloat(document.getElementById('month-rendimiento').value);
+    const preview = document.getElementById('month-preview');
+    if (!isNaN(saldo) && !isNaN(rendimiento)) {
+      const aporte = saldo - saldoAnterior - rendimiento;
+      const aporteColor = aporte >= 0 ? 'var(--green)' : 'var(--red)';
+      preview.innerHTML = `
+        <div><span>Saldo nuevo:</span><strong>${curSymbol}${Math.round(saldo).toLocaleString('en-US')}${curSuffix}</strong></div>
+        <div><span>Saldo anterior:</span><strong>${curSymbol}${Math.round(saldoAnterior).toLocaleString('en-US')}${curSuffix}</strong></div>
+        <div><span>Rendimiento:</span><strong style="color: ${rendimiento >= 0 ? 'var(--green)' : 'var(--red)'};">${rendimiento >= 0 ? '+' : ''}${curSymbol}${Math.round(rendimiento).toLocaleString('en-US')}${curSuffix}</strong></div>
+        <div style="padding-top: 6px; margin-top: 6px; border-top: 0.5px solid var(--border);"><span>Aporte calculado:</span><strong style="color: ${aporteColor};">${aporte >= 0 ? '+' : ''}${curSymbol}${Math.round(aporte).toLocaleString('en-US')}${curSuffix}</strong></div>
+        ${aporte < 0 ? '<div style="font-size: 10px; color: var(--red); margin-top: 4px;">⚠️ Aporte negativo indica un retiro</div>' : ''}`;
+      preview.style.display = 'block';
+    } else {
+      preview.style.display = 'none';
+    }
+  };
+
+  document.getElementById('month-saldo').addEventListener('input', updatePreview);
+  document.getElementById('month-rendimiento').addEventListener('input', updatePreview);
+
+  document.getElementById('btn-month-cancel').addEventListener('click', closeModal);
+  document.getElementById('modal-bd').addEventListener('click', (e) => { if (e.target.id === 'modal-bd') closeModal(); });
+
+  document.getElementById('btn-month-save').addEventListener('click', () => {
+    const monthStr = document.getElementById('month-date').value;
+    const saldo = parseFloat(document.getElementById('month-saldo').value);
+    const rendimiento = parseFloat(document.getElementById('month-rendimiento').value);
+
+    if (!monthStr) { alert('Seleccione el mes'); return; }
+    if (isNaN(saldo) || saldo < 0) { alert('Ingrese un saldo válido'); return; }
+    if (isNaN(rendimiento)) { alert('Ingrese el rendimiento del mes'); return; }
+
+    const aporte = saldo - saldoAnterior - rendimiento;
+    const dateObj = new Date(monthStr + '-01').toISOString();
+
+    // Verificar si ya existe registro para ese mes
+    const existingIdx = asset.monthlyRecords.findIndex(r => r.date.substring(0, 7) === monthStr);
+    const record = { date: dateObj, saldo, rendimiento, aporte };
+
+    if (existingIdx >= 0) {
+      if (!confirm('Ya existe un registro para este mes. ¿Desea reemplazarlo?')) return;
+      asset.monthlyRecords[existingIdx] = record;
+    } else {
+      asset.monthlyRecords.push(record);
+      asset.monthlyRecords.sort((a, b) => new Date(a.date) - new Date(b.date));
+    }
+
+    // Actualizar el valor actual del activo al último saldo registrado
+    asset.value = saldo;
+    asset.lastUpdate = new Date().toISOString();
+
+    saveData();
+    renderPatrimonio();
+    closeModal();
+  });
+}
+
+// Modal para ver historial de aportes mensuales
+function openHistoryModal(assetId) {
+  const asset = data.patrimonio.find(x => x.id === assetId);
+  if (!asset || !asset.monthlyRecords || asset.monthlyRecords.length === 0) return;
+
+  const curSymbol = '$';
+  const curSuffix = asset.currency === 'USD' ? ' USD' : ' COP';
+
+  let totalAportado = 0, totalRendimiento = 0;
+  asset.monthlyRecords.forEach(r => {
+    totalAportado += r.aporte || 0;
+    totalRendimiento += r.rendimiento || 0;
+  });
+
+  const rentPct = totalAportado > 0 ? (totalRendimiento / totalAportado * 100) : 0;
+
+  let rowsHtml = '';
+  [...asset.monthlyRecords].reverse().forEach((r, idx) => {
+    const d = new Date(r.date);
+    const monthName = d.toLocaleDateString('es-ES', {month: 'long', year: 'numeric'});
+    const rendColor = r.rendimiento >= 0 ? 'var(--green)' : 'var(--red)';
+    const aporteColor = r.aporte >= 0 ? 'var(--text)' : 'var(--red)';
+    const realIdx = asset.monthlyRecords.length - 1 - idx;
+
+    rowsHtml += `
+      <div class="history-block">
+        <div class="history-month-title" style="display: flex; justify-content: space-between; align-items: center;">
+          <span>${monthName.charAt(0).toUpperCase() + monthName.slice(1)}</span>
+          <button class="btn-history-del" data-del-idx="${realIdx}" style="background: transparent; border: none; color: var(--text-3); cursor: pointer; font-size: 14px; padding: 2px 6px;">🗑️</button>
+        </div>
+        <div class="history-row">
+          <div>
+            <div class="h-label">Saldo</div>
+            <div class="h-value">${curSymbol}${Math.round(r.saldo).toLocaleString('en-US')}</div>
+          </div>
+          <div>
+            <div class="h-label">Aporte</div>
+            <div class="h-value" style="color: ${aporteColor};">${r.aporte >= 0 ? '+' : ''}${curSymbol}${Math.round(r.aporte).toLocaleString('en-US')}</div>
+          </div>
+          <div>
+            <div class="h-label">Rendimiento</div>
+            <div class="h-value" style="color: ${rendColor};">${r.rendimiento >= 0 ? '+' : ''}${curSymbol}${Math.round(r.rendimiento).toLocaleString('en-US')}</div>
+          </div>
+        </div>
+      </div>`;
+  });
+
+  const modalHtml = `
+    <div class="modal-backdrop" id="modal-bd">
+      <div class="modal" style="max-width: 500px; max-height: 85vh; display: flex; flex-direction: column;">
+        <h3>Historial — ${asset.name}</h3>
+        <p class="sub">${asset.monthlyRecords.length} meses registrados</p>
+
+        <div class="modal-preview" style="display: block; background: var(--blue-bg); color: var(--text);">
+          <div><span>Total aportado:</span><strong>${curSymbol}${Math.round(totalAportado).toLocaleString('en-US')}${curSuffix}</strong></div>
+          <div><span>Total rendimientos:</span><strong style="color: var(--green);">+${curSymbol}${Math.round(totalRendimiento).toLocaleString('en-US')}${curSuffix}</strong></div>
+          <div style="padding-top: 6px; margin-top: 6px; border-top: 0.5px solid var(--border);"><span>Rentabilidad:</span><span class="highlight">+${rentPct.toFixed(2)}%</span></div>
+        </div>
+
+        <div style="overflow-y: auto; flex: 1; margin-top: 12px; padding-right: 4px;">
+          ${rowsHtml}
+        </div>
+
+        <div class="modal-btns">
+          <button class="btn-cancel" id="btn-hist-close">Cerrar</button>
+        </div>
+      </div>
+    </div>`;
+
+  document.getElementById('modal-container').innerHTML = modalHtml;
+
+  document.getElementById('btn-hist-close').addEventListener('click', closeModal);
+  document.getElementById('modal-bd').addEventListener('click', (e) => { if (e.target.id === 'modal-bd') closeModal(); });
+
+  // Eliminar registros individuales
+  document.querySelectorAll('.btn-history-del').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const idx = parseInt(e.currentTarget.dataset.delIdx);
+      if (confirm('¿Eliminar este registro mensual?')) {
+        asset.monthlyRecords.splice(idx, 1);
+        // Actualizar valor actual al último saldo registrado (si hay)
+        if (asset.monthlyRecords.length > 0) {
+          asset.value = asset.monthlyRecords[asset.monthlyRecords.length - 1].saldo;
+        }
+        saveData();
+        renderPatrimonio();
+        closeModal();
+      }
+    });
+  });
+}
+
 // Listener para botones de compra/venta en posiciones
 document.addEventListener('click', (e) => {
   if (e.target.classList.contains('btn-add-tx') && e.target.dataset.action === 'buy') {
@@ -1143,6 +1747,10 @@ document.addEventListener('click', (e) => {
     openTransactionModal(parseInt(e.target.dataset.idx), 'sell');
   } else if (e.target.id === 'btn-new-position') {
     openTransactionModal('new', 'buy');
+  } else if (e.target.classList.contains('btn-month-add')) {
+    openMonthlyRecordModal(parseInt(e.target.dataset.ptMonth));
+  } else if (e.target.classList.contains('btn-month-view')) {
+    openHistoryModal(parseInt(e.target.dataset.ptHistory));
   }
 });
 
